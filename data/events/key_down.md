@@ -1,16 +1,9 @@
-# key_down — нажатие клавиши (с клавиатуры OC)
+# key_down
+Генерируется при нажатии клавиши на клавиатуре.
 
-```lua
-key_down(keyboardAddress: string, char: number, code: number, playerName: string)
-```
-- `char` — код символа (для букв/цифр), 0 для служебных клавиш
-- `code` — скан-код клавиши; сравнивай с константами:
+**Сигнатура:** `key_down(keyboardAddress: string, char: number, code: number, playerName: string)`
 
-```lua
-local keyboard = require("keyboard")
-local _, _, c = event.pull("key_down")
-if c == keyboard.keys.enter then ... end
-if c == keyboard.keys.space then ... end
-if c == keyboard.keys.back then ... end  -- backspace
--- стрелки: keyboard.keys.left / right / up / down
-```
+- `keyboardAddress` — адрес клавиатуры (string)
+- `char` — КОД символа (number, НЕ строка!). Для получения символа: `unicode.char(char)`
+- `code` — код клавиши (number). Enter=28, Esc=1, Backspace=14, F1..F6=59..64
+- `playerName` — ник игрока (string)

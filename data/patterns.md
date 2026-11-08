@@ -227,4 +227,3 @@ local my = math.floor((H - mh) / 2) + 1
 if mx < 1 or my < 1 or mx + mw > W or my + mh > H then
     -- Не рисуй модалку, покажи сообщение "Экран слишком мал"
 end
-``

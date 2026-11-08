@@ -1,18 +1,13 @@
-# touch — клик по экрану (T2/T3)
+# touch
+Генерируется при клике по экрану (монитору) 2-го или 3-го уровня.
 
-```lua
-touch(screenAddress: string, x: number, y: number, button: number, playerName: string)
+**Сигнатура:** `touch(screenAddress: string, x: number, y: number, button: number, playerName: string)`
+
+- `screenAddress` — адрес экрана (string, НЕ координата!)
+- `x` — координата X (number)
+- `y` — координата Y (number)
+- `button` — кнопка мыши (number)
+- `playerName` — ник игрока (string)
+
+**Важно:** если используешь `local x, y = event.pull("touch")`, то x получит адрес, y — координату X. Правильно: `local _, _, x, y = event.pull("touch")`.
 ```
-
-## ❌ Главная ошибка OC
-```lua
-local x, y = event.pull("touch")  -- x = адрес экрана (строка!), y = координата X
-```
-
-## ✅ Правильно
-```lua
-local _, _, x, y = event.pull("touch")
--- или: local _, addr, x, y, btn, player = event.pull("touch")
-```
-
-`button`: 0 = левый, 1 = правый. GUI vs touch регулируется `screen.setTouchModeInverted()`.

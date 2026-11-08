@@ -1,8 +1,6 @@
-# scroll — колесо мыши на экране
+# scroll
+Генерируется при прокрутке колесика мыши по экрану.
 
-```lua
-scroll(screenAddress, x, y, direction, playerName)
-```
-`direction`: 1 / -1 (знак может отличаться по версии — логируй при отладке).
+**Сигнатура:** `scroll(screenAddress: string, x: number, y: number, direction: number, playerName: string)`
 
-Применение: прокрутка списков/логов. Пары событий scroll идут часто — дебаунсь, если UI тормозит.
+- `direction` — 1 (вверх) или -1 (вниз)

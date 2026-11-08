@@ -14,6 +14,10 @@ from fastmcp import FastMCP
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
+KNOWLEDGE_DIR = os.path.join(BASE_DIR, "knowledge")
+
+# Каталоги, которые просматривает поиск (data + сводные knowledge-документы)
+SEARCH_DIRS = [DATA_DIR, KNOWLEDGE_DIR]
 
 mcp = FastMCP("oc-dev")
 
@@ -35,6 +39,21 @@ def _list_names(subdir):
 def _read(subdir, name):
     name = ALIASES.get(name, name)
     path = os.path.join(DATA_DIR, subdir, name + ".md")
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    return None
+
+
+def _list_knowledge():
+    if not os.path.isdir(KNOWLEDGE_DIR):
+        return []
+    return sorted(f[:-3] for f in os.listdir(KNOWLEDGE_DIR) if f.endswith(".md"))
+
+
+def _read_knowledge(name):
+    name = name.strip().lower()
+    path = os.path.join(KNOWLEDGE_DIR, name + ".md")
     if os.path.isfile(path):
         with open(path, encoding="utf-8") as f:
             return f.read()
@@ -64,6 +83,10 @@ def list_api():
             with open(p, encoding="utf-8") as f:
                 first = f.readline().strip("# \n")
             out.append("## ДОПОЛНИТЕЛЬНО" + NEWLINE + "- " + extra[:-3] + ": " + first)
+    knowledge = _list_knowledge()
+    if knowledge:
+        out.append("## СВОДНЫЕ СПРАВОЧНИКИ (" + str(len(knowledge)) + ")"
+                   + NEWLINE + ", ".join(knowledge))
     return (NEWLINE + NEWLINE).join(out)
 
 
@@ -102,6 +125,32 @@ def get_library(name):
 
 
 @mcp.tool()
+def list_knowledge():
+    """Список сводных справочников (knowledge/): oc_core, ae2, openperipheral."""
+    names = _list_knowledge()
+    if not names:
+        return "Каталог knowledge/ пуст или отсутствует."
+    return "## СВОДНЫЕ СПРАВОЧНИКИ (" + str(len(names)) + ")" + NEWLINE + ", ".join(names)
+
+
+@mcp.tool()
+def get_knowledge(name):
+    """Сводный справочник по теме: oc_core (ядро OpenOS: component/event/gpu/
+    unicode/term), ae2 (Applied Energistics 2: me_interface, craftables,
+    статус крафта), openperipheral (PIM, Adapter)."""
+    doc = _read_knowledge(name)
+    if doc is None:
+        names = _list_knowledge()
+        if names:
+            close = difflib.get_close_matches(name.strip().lower(), names, n=3, cutoff=0.4)
+            hint = (" Возможно, ты имел в виду: " + ", ".join(close) + "?") if close \
+                else (" Доступные: " + ", ".join(names) + ".")
+            return "Раздел knowledge '" + name + "' не найден." + hint
+        return "Каталог knowledge/ пуст или отсутствует."
+    return doc
+
+
+@mcp.tool()
 def search(query, max_results=10):
     """Полнотекстовый поиск по всей базе. Ищи по-русски или по-английски:
     scroll, палитра, touch, порт."""
@@ -109,17 +158,18 @@ def search(query, max_results=10):
     if not q:
         return "Пустой запрос."
     hits = []
-    for base, _, files in os.walk(DATA_DIR):
-        for fn in sorted(files):
-            if not fn.endswith(".md"):
-                continue
-            path = os.path.join(base, fn)
-            rel = os.path.relpath(path, DATA_DIR)[:-3]
-            with open(path, encoding="utf-8") as f:
-                for i, line in enumerate(f, 1):
-                    if q in line.lower():
-                        hits.append("- " + rel + ":" + str(i) + ": " + line.strip()[:160])
-                        break
+    for root_dir in SEARCH_DIRS:
+        for base, _, files in os.walk(root_dir):
+            for fn in sorted(files):
+                if not fn.endswith(".md"):
+                    continue
+                path = os.path.join(base, fn)
+                rel = os.path.relpath(path, root_dir)[:-3]
+                with open(path, encoding="utf-8") as f:
+                    for i, line in enumerate(f, 1):
+                        if q in line.lower():
+                            hits.append("- " + rel + ":" + str(i) + ": " + line.strip()[:160])
+                            break
     if not hits:
         return "По запросу '" + query + "' ничего не найдено."
     head = "Найдено " + str(min(len(hits), max_results)) + ":"
